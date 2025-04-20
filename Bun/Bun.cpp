@@ -46,7 +46,7 @@ namespace Bun {
     /*
         simple button with hover & click effects
     */
-    void Button(const char* name, const ImVec2& size = ImVec2(110, 35)) {
+    bool Button(const char* name, const ImVec2& size = ImVec2(110, 35)) {
         ImGui::PushID(name);
 
         /* animation & colors */
@@ -89,12 +89,17 @@ namespace Bun {
         list->AddText(tPos, IM_COL32(255, 255, 255, 255), name);
 
         ImGui::PopID();
+        
+        return b;
     }
 
     void Checkbox();
     void Slider();
     void Section();
-    void NavigationBar();
+    void NavigationBar(const char* name, const ImVec2& size) {
+        ImGui::PushID(name);
+
+    }
     void NavigationButton();
     void TabBar();
     void TabButton();
@@ -186,7 +191,9 @@ int main(int, char**)
 
         ImGui::SetNextWindowSize(ImVec2(650, 400));
         if (ImGui::Begin("Bun", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
-            Bun::Button("Click Me!");
+            if (Bun::Button("Click Me!")) {
+                std::cout << "Clicked!\n";
+            }
             ImGui::End();
         }
 
