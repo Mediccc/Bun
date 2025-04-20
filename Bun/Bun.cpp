@@ -57,8 +57,8 @@ namespace Bun {
         ImVec4 active = style.Colors[ImGuiCol_ButtonActive];
         static float progress = 0.0f;
         static float click = 0.0f;
-        float hoverSpeed = 6.0f;
-        float clickSpeed = 10.0f;
+        float hoverSpeed = 5.0f;
+        float clickSpeed = 9.0f;
 
         /* drawing */
         ImDrawList* list = ImGui::GetWindowDrawList();
