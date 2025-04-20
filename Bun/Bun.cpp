@@ -13,6 +13,7 @@
 #include <tchar.h>
 #include <iostream>
 #include <imgui_internal.h>
+#include <unordered_map>
 
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -46,8 +47,16 @@ namespace Bun {
     /*
         simple button with hover & click effects
     */
-    bool Button(const char* name, const ImVec2& size = ImVec2(110, 35)) {
+    bool Button(const char* name, const ImVec2& size = ImVec2(110, 35), const ImVec2& pos = ImGui::GetCursorScreenPos()) {
         ImGui::PushID(name);
+
+        static std::unordered_map<ImGuiID, float> pMap; /* i added maps so we can have multiple buttons */
+        static std::unordered_map<ImGuiID, float> cMap;
+
+        ImGuiID id = ImGui::GetID(name);
+
+        float& progress = pMap[id];
+        float& click = cMap[id];
 
         /* animation & colors */
         ImGuiStyle& style = ImGui::GetStyle();
@@ -55,14 +64,12 @@ namespace Bun {
         ImVec4 background = style.Colors[ImGuiCol_Button];
         ImVec4 hover = style.Colors[ImGuiCol_ButtonHovered];
         ImVec4 active = style.Colors[ImGuiCol_ButtonActive];
-        static float progress = 0.0f;
-        static float click = 0.0f;
         float hoverSpeed = 5.0f;
         float clickSpeed = 9.0f;
 
         /* drawing */
         ImDrawList* list = ImGui::GetWindowDrawList();
-        ImVec2 pos = ImGui::GetCursorScreenPos();
+        //ImVec2 pos = ImGui::GetCursorScreenPos();
         ImVec2 tSize = ImGui::CalcTextSize(name);
         ImVec2 tPos = ImVec2(pos.x + (size.x - tSize.x) * 0.5f, pos.y + (size.y - tSize.y) * 0.5f);
 
@@ -96,11 +103,38 @@ namespace Bun {
     void Checkbox();
     void Slider();
     void Section();
+
+    /* todo: add functionality to the navigation things im too tired for that rn */
     void NavigationBar(const char* name, const ImVec2& size) {
         ImGui::PushID(name);
 
+        /* colors */
+        ImGuiStyle& style = ImGui::GetStyle();
+        ImVec4 background = style.Colors[ImGuiCol_Button]; /* just gonna use the button's color for the background, change to whatever you want tho */
+
+        /* drawing */
+        ImDrawList* list = ImGui::GetWindowDrawList();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+
+        list->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), ImGui::ColorConvertFloat4ToU32(background), 2.0f);
+
+        ImGui::PopID();
     }
-    void NavigationButton();
+
+    bool NavigationButton(const char* name, const ImVec2& size) { /* todo: automatically handle the button size? */
+        ImGui::PushID(name);
+
+        ImDrawList* list = ImGui::GetWindowDrawList();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImVec2 p = ImVec2(pos.x + 10, pos.y + 10);
+        bool b = Button(name, size, p);
+        pos.y += 45; /* move cursor for the next button, feel free to tweak this if it's too much for your button's size */
+
+        ImGui::SetCursorScreenPos(pos);
+        ImGui::PopID();
+
+        return b;
+    }
     void TabBar();
     void TabButton();
     void Notification();
@@ -191,9 +225,23 @@ int main(int, char**)
 
         ImGui::SetNextWindowSize(ImVec2(650, 400));
         if (ImGui::Begin("Bun", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
+            Bun::NavigationBar("NavBar", ImVec2(150, 385));
+
+            if (Bun::NavigationButton("Home", ImVec2(130, 35))) {
+
+            }
+
+            if (Bun::NavigationButton("Menu", ImVec2(130, 35))) {
+
+            }
+
+            if (Bun::NavigationButton("Settings", ImVec2(130, 35))) {
+
+            }
+            /*
             if (Bun::Button("Click Me!")) {
                 std::cout << "Clicked!\n";
-            }
+            }*/
             ImGui::End();
         }
 
