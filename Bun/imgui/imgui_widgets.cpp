@@ -1240,6 +1240,83 @@ bool ImGui::Checkbox(const char* label, bool* v)
     return pressed;
 }
 
+bool ImGui::BunCheckbox(const char* label, bool* v) /* just a modified checkbox */
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+    ImGuiIO& io = ImGui::GetIO();
+    const ImGuiID id = window->GetID(label);
+    const ImVec2 label_size = CalcTextSize(label, NULL, true);
+    const float square_sz = label_size.y + style.FramePadding.y * 2.0f;
+
+    const ImVec2 pos = window->DC.CursorPos;
+    const ImRect total_bb(pos, pos + ImVec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), square_sz));
+    ItemSize(total_bb, style.FramePadding.y);
+    if (!ItemAdd(total_bb, id))
+        return false;
+
+    bool hovered, held;
+    bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
+    if (pressed)
+    {
+        *v = !(*v);
+        MarkItemEdited(id);
+    }
+
+    const ImRect check_bb(pos, pos + ImVec2(square_sz, square_sz));
+    const bool checked = *v;
+
+    static std::unordered_map<ImGuiID, float> fade_alpha;
+    static std::unordered_map<ImGuiID, float> pMap;
+    static std::unordered_map<ImGuiID, float> cMap;
+
+    float& progress = pMap[id];
+    float& click = cMap[id];
+    float& alpha = fade_alpha[id];
+
+    float hoverSpeed = 5.0f;
+    float clickSpeed = 9.0f;
+
+    ImVec4 background = style.Colors[ImGuiCol_FrameBg];
+    ImVec4 hover = style.Colors[ImGuiCol_FrameBgHovered];
+    ImVec4 active = style.Colors[ImGuiCol_FrameBgActive];
+
+    progress += (hovered ? 1.0f : -1.0f) * io.DeltaTime * hoverSpeed;
+    progress = ImClamp(progress, 0.0f, 1.0f);
+
+    if (click > 0.0f) {
+        click -= io.DeltaTime * clickSpeed;
+        if (click < 0.0f) click = 0.0f;
+    }
+
+    ImVec4 color = ImLerp(background, hover, progress);
+
+    float target_alpha = checked ? 1.0f : 0.0f;
+    float speed = 12.0f;
+    alpha = ImLerp(alpha, target_alpha, 1.0f - expf(-speed * g.IO.DeltaTime));
+
+    ImU32 frame_col = GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
+    RenderNavCursor(total_bb, id);
+    RenderFrame(check_bb.Min, check_bb.Max, GetColorU32(color), true, style.FrameRounding);
+
+    if (alpha > 0.0f)
+    {
+        const ImU32 check_col = GetColorU32(ImGuiCol_CheckMark, alpha);
+        const float pad = ImMax(1.0f, IM_TRUNC(square_sz / 6.0f));
+        RenderCheckMark(window->DrawList, check_bb.Min + ImVec2(pad, pad), check_col, square_sz - pad * 2.0f);
+    }
+
+    if (label_size.x > 0.0f)
+        RenderText(ImVec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y), label);
+
+    IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags | ImGuiItemStatusFlags_Checkable | (checked ? ImGuiItemStatusFlags_Checked : 0));
+    return pressed;
+}
+
 template<typename T>
 bool ImGui::CheckboxFlagsT(const char* label, T* flags, T flags_value)
 {
